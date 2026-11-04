@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recepción & Check-in de Invitados</title>
+    <title>Morado Claro Events - Control de Invitados</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Plus Jakarta Sans -->
@@ -57,37 +57,37 @@
 
     <!-- Header Principal -->
     <header class="bg-white border-b border-lila-100 sticky top-0 z-30 shadow-sm backdrop-blur-md bg-opacity-95">
-        <div class="max-w-4xl mx-auto px-4 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
             
-            <!-- Branding & Logo Empresa -->
+            <!-- Branding & Logo Morado Claro Events -->
             <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
                 <div class="flex items-center gap-3">
-                    <div class="relative group cursor-pointer" onclick="document.getElementById('logo-file-input').click()" title="Haz clic para subir el logo de tu empresa">
-                        <div id="logo-container" class="w-12 h-12 rounded-2xl bg-lila-100 text-lila-700 flex items-center justify-center font-bold overflow-hidden border border-lila-200 shadow-inner">
-                            <i class="fa-solid fa-crown text-xl" id="default-logo-icon"></i>
-                            <img id="custom-logo-img" class="w-full h-full object-cover hidden" alt="Logo Empresa">
+                    <div class="relative group cursor-pointer" onclick="document.getElementById('logo-file-input').click()" title="Toca para cambiar logo">
+                        <div id="logo-container" class="w-12 h-12 rounded-2xl bg-white border border-lila-200 shadow-sm flex items-center justify-center overflow-hidden p-0.5">
+                            <img id="custom-logo-img" class="w-full h-full object-contain" alt="Morado Claro Events">
                         </div>
-                        <div class="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div class="absolute inset-0 bg-black/30 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <i class="fa-solid fa-camera text-white text-xs"></i>
                         </div>
                     </div>
                     <input type="file" id="logo-file-input" accept="image/*" class="hidden" onchange="uploadCustomLogo(event)">
                     
                     <div>
-                        <h1 class="font-extrabold text-lg text-gray-900 leading-tight">Recepción de Invitados</h1>
-                        <p class="text-xs text-lila-600 font-semibold flex items-center gap-1">
+                        <h1 class="font-extrabold text-lg text-gray-900 leading-tight">Morado Claro</h1>
+                        <p class="text-xs text-lila-600 font-bold uppercase tracking-wider flex items-center gap-1">
                             <i class="fa-solid fa-sparkles text-[10px]"></i>
-                            <span>Organización de Eventos</span>
+                            <span>Events Planner</span>
                         </p>
                     </div>
                 </div>
 
-                <button onclick="openModal()" class="sm:hidden bg-lila-600 hover:bg-lila-700 text-white p-3 rounded-xl text-sm font-semibold shadow-md active:scale-95 transition">
+                <!-- Botón móvil agregar -->
+                <button onclick="openModal()" class="sm:hidden bg-lila-600 hover:bg-lila-700 text-white p-2.5 rounded-xl text-sm font-semibold shadow-md active:scale-95 transition">
                     <i class="fa-solid fa-user-plus text-base"></i>
                 </button>
             </div>
 
-            <!-- Contadores Superiores -->
+            <!-- Contadores Superiores Rápidos -->
             <div class="grid grid-cols-3 gap-2 w-full sm:w-auto text-center">
                 <div class="bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-xl">
                     <span class="block text-[10px] uppercase font-bold text-gray-400 tracking-wider">Total</span>
@@ -103,9 +103,19 @@
                 </div>
             </div>
 
-            <button onclick="openModal()" class="hidden sm:flex items-center gap-2 bg-lila-600 hover:bg-lila-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition active:scale-95">
+            <button onclick="openModal()" class="hidden sm:flex items-center gap-2 bg-lila-600 hover:bg-lila-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition active:scale-95">
                 <i class="fa-solid fa-user-plus"></i>
                 <span>Nuevo Invitado</span>
+            </button>
+        </div>
+
+        <!-- Selector de Vistas (Lista vs Mesas) -->
+        <div class="max-w-4xl mx-auto px-4 flex border-t border-lila-100 bg-lila-50/50">
+            <button onclick="switchMainView('list')" id="view-tab-list" class="flex-1 py-2.5 text-xs font-extrabold uppercase tracking-wider text-center border-b-2 border-lila-600 text-lila-700 flex items-center justify-center gap-2 transition">
+                <i class="fa-solid fa-list-ul"></i> Lista de Invitados
+            </button>
+            <button onclick="switchMainView('tables')" id="view-tab-tables" class="flex-1 py-2.5 text-xs font-extrabold uppercase tracking-wider text-center border-b-2 border-transparent text-gray-400 hover:text-lila-600 flex items-center justify-center gap-2 transition">
+                <i class="fa-solid fa-chair"></i> Control por Mesas
             </button>
         </div>
     </header>
@@ -113,37 +123,54 @@
     <!-- Contenido Principal -->
     <main class="max-w-4xl mx-auto px-4 py-6 w-full flex-grow">
         
-        <!-- Buscador y Filtros -->
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-lila-100 mb-6 space-y-4">
-            
-            <div class="relative">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-lila-400">
-                    <i class="fa-solid fa-magnifying-glass text-lg"></i>
-                </span>
-                <input type="text" id="search-input" oninput="handleSearch()" placeholder="Buscar por nombre, apellido o mesa..." 
-                    class="w-full pl-11 pr-10 py-3.5 bg-lila-50/40 border border-lila-200 rounded-xl text-gray-800 placeholder-lila-300 text-base font-medium focus:outline-none focus:ring-2 focus:ring-lila-500 focus:bg-white transition">
-                <button onclick="clearSearch()" id="clear-search-btn" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 hidden">
-                    <i class="fa-solid fa-circle-xmark text-lg"></i>
-                </button>
+        <!-- VISTA 1: LISTA INDIVIDUAL -->
+        <div id="main-view-list" class="space-y-4">
+            <!-- Buscador y Filtros -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-lila-100 space-y-4">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-lila-400">
+                        <i class="fa-solid fa-magnifying-glass text-lg"></i>
+                    </span>
+                    <input type="text" id="search-input" oninput="handleSearch()" placeholder="Buscar por nombre, apellido o mesa..." 
+                        class="w-full pl-11 pr-10 py-3.5 bg-lila-50/40 border border-lila-200 rounded-xl text-gray-800 placeholder-lila-300 text-base font-medium focus:outline-none focus:ring-2 focus:ring-lila-500 focus:bg-white transition">
+                    <button onclick="clearSearch()" id="clear-search-btn" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 hidden">
+                        <i class="fa-solid fa-circle-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Tabs de Filtro -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                    <button onclick="setFilter('all')" id="filter-all" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition bg-lila-600 text-white shadow-sm">
+                        Todos (<span id="count-all">0</span>)
+                    </button>
+                    <button onclick="setFilter('pending')" id="filter-pending" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition bg-gray-100 text-gray-600 hover:bg-gray-200">
+                        Pendientes (<span id="count-pending">0</span>)
+                    </button>
+                    <button onclick="setFilter('arrived')" id="filter-arrived" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition bg-gray-100 text-gray-600 hover:bg-gray-200">
+                        Ya llegaron (<span id="count-arrived">0</span>)
+                    </button>
+                </div>
             </div>
 
-            <!-- Tabs de Filtro -->
-            <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                <button onclick="setFilter('all')" id="filter-all" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition bg-lila-600 text-white shadow-sm">
-                    Todos (<span id="count-all">0</span>)
-                </button>
-                <button onclick="setFilter('pending')" id="filter-pending" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition bg-gray-100 text-gray-600 hover:bg-gray-200">
-                    Pendientes (<span id="count-pending">0</span>)
-                </button>
-                <button onclick="setFilter('arrived')" id="filter-arrived" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition bg-gray-100 text-gray-600 hover:bg-gray-200">
-                    Ya llegaron (<span id="count-arrived">0</span>)
-                </button>
-            </div>
+            <!-- Lista Dinámica de Invitados -->
+            <div id="guests-container" class="space-y-3"></div>
         </div>
 
-        <!-- Lista Dinámica de Invitados -->
-        <div id="guests-container" class="space-y-3"></div>
+        <!-- VISTA 2: DESGLOSE POR MESAS -->
+        <div id="main-view-tables" class="hidden space-y-4">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-lila-100 flex items-center justify-between">
+                <div>
+                    <h2 class="font-extrabold text-base text-gray-900">Resumen por Mesas</h2>
+                    <p class="text-xs text-gray-500">Toca cualquier mesa para desplegar la lista de quiénes están y quiénes faltan.</p>
+                </div>
+                <span class="bg-lila-100 text-lila-800 font-extrabold text-xs px-3 py-1 rounded-xl" id="table-count-badge">14 Mesas</span>
+            </div>
 
+            <!-- Contenedor de Tarjetas de Mesas -->
+            <div id="tables-container" class="space-y-4"></div>
+        </div>
+
+        <!-- Mensaje cuando no se encuentra nadie -->
         <div id="empty-state" class="hidden flex flex-col items-center justify-center py-16 px-4 text-center">
             <div class="w-16 h-16 bg-lila-100 text-lila-500 rounded-full flex items-center justify-center text-2xl mb-3 shadow-inner">
                 <i class="fa-solid fa-user-slash"></i>
@@ -154,12 +181,13 @@
 
     </main>
 
+    <!-- Pie de página -->
     <footer class="text-center py-6 text-xs text-gray-400 border-t border-lila-100/60 bg-white/50">
-        <p class="font-medium text-gray-500">Sistema de Control de Asistencia • Event Planner</p>
+        <p class="font-semibold text-gray-500">Morado Claro Events • Control de Asistencia</p>
         <button onclick="resetData()" class="mt-2 text-lila-600 hover:text-lila-800 underline font-semibold transition">Restaurar lista original completa</button>
     </footer>
 
-    <!-- Modal Nuevo Invitado -->
+    <!-- Modal para Agregar / Editar Invitado -->
     <div id="guest-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl transform scale-95 transition-transform duration-300" id="modal-content">
             <div class="flex items-center justify-between mb-4">
@@ -201,13 +229,18 @@
         </div>
     </div>
 
-    <!-- Toast -->
+    <!-- Notificación Flotante (Toast) -->
     <div id="toast" class="fixed bottom-5 right-5 z-50 bg-gray-900 text-white px-4 py-3 rounded-2xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3">
         <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
         <span id="toast-message" class="text-sm font-semibold">Operación exitosa</span>
     </div>
 
+    <!-- Lógica JavaScript -->
     <script>
+        // LOGO OFICIAL EMBEBIDO EN BASE64 (MORADO CLARO EVENTS)
+        const DEFAULT_LOGO_BASE64 = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAAACXBIWXMAAAsTAAALEwEAmpwYAAAgAElEQVR4nO3df5zcZX3n8e9ndpNAgASyIRuCRCCyBAV0gwgq4g8E21qrqFZr/dFqrdZWW6222lq11WqrtX6/rbW1Vmu1VquttVptVdQqgqiA...`; // Logo cargado
+
+        // LISTA DE INVITADOS
         const initialGuestsData = [
             // MESA 1
             { id: '1', nombre: 'Maria Hurtado', mesa: 'MESA 1', nota: '', arrived: false, time: null },
@@ -343,12 +376,35 @@
         let guests = [];
         let currentFilter = 'all'; 
         let searchQuery = '';
+        let activeMainView = 'list';
+        let expandedTables = {};
 
         window.onload = function() {
             loadGuests();
             loadLogo();
             renderApp();
         };
+
+        function switchMainView(view) {
+            activeMainView = view;
+            const btnList = document.getElementById('view-tab-list');
+            const btnTables = document.getElementById('view-tab-tables');
+            const viewList = document.getElementById('main-view-list');
+            const viewTables = document.getElementById('main-view-tables');
+
+            if (view === 'list') {
+                btnList.className = "flex-1 py-2.5 text-xs font-extrabold uppercase tracking-wider text-center border-b-2 border-lila-600 text-lila-700 flex items-center justify-center gap-2 transition";
+                btnTables.className = "flex-1 py-2.5 text-xs font-extrabold uppercase tracking-wider text-center border-b-2 border-transparent text-gray-400 hover:text-lila-600 flex items-center justify-center gap-2 transition";
+                viewList.classList.remove('hidden');
+                viewTables.classList.add('hidden');
+            } else {
+                btnTables.className = "flex-1 py-2.5 text-xs font-extrabold uppercase tracking-wider text-center border-b-2 border-lila-600 text-lila-700 flex items-center justify-center gap-2 transition";
+                btnList.className = "flex-1 py-2.5 text-xs font-extrabold uppercase tracking-wider text-center border-b-2 border-transparent text-gray-400 hover:text-lila-600 flex items-center justify-center gap-2 transition";
+                viewTables.classList.remove('hidden');
+                viewList.classList.add('hidden');
+            }
+            renderApp();
+        }
 
         function loadGuests() {
             const stored = localStorage.getItem('lila_event_guests_v2');
@@ -393,17 +449,12 @@
 
         function loadLogo() {
             const storedLogo = localStorage.getItem('lila_event_custom_logo');
-            if (storedLogo) {
-                displayLogo(storedLogo);
-            }
+            displayLogo(storedLogo || DEFAULT_LOGO_BASE64);
         }
 
         function displayLogo(src) {
             const img = document.getElementById('custom-logo-img');
-            const icon = document.getElementById('default-logo-icon');
             img.src = src;
-            img.classList.remove('hidden');
-            icon.classList.add('hidden');
         }
 
         function handleSearch() {
@@ -453,6 +504,11 @@
                 saveToStorage();
                 renderApp();
             }
+        }
+
+        function toggleTableAccordion(tableName) {
+            expandedTables[tableName] = !expandedTables[tableName];
+            renderApp();
         }
 
         function openModal(id = null) {
@@ -509,7 +565,7 @@
                     guest.nombre = nombre;
                     guest.mesa = mesa;
                     guest.nota = nota;
-                    showToast('Datos de invitado actualizados', 'success');
+                    showToast('Datos actualizados', 'success');
                 }
             } else {
                 const newGuest = {
@@ -531,7 +587,7 @@
 
         function deleteGuest(id) {
             const guest = guests.find(g => g.id === id);
-            if (confirm(`¿Eliminar a ${guest.nombre} de la lista?`)) {
+            if (confirm(`¿Eliminar a ${guest.nombre}?`)) {
                 guests = guests.filter(g => g.id !== id);
                 saveToStorage();
                 renderApp();
@@ -542,6 +598,7 @@
         function renderApp() {
             const container = document.getElementById('guests-container');
             const emptyState = document.getElementById('empty-state');
+            const tablesContainer = document.getElementById('tables-container');
 
             const totalCount = guests.length;
             const arrivedCount = guests.filter(g => g.arrived).length;
@@ -555,60 +612,137 @@
             document.getElementById('count-pending').textContent = pendingCount;
             document.getElementById('count-arrived').textContent = arrivedCount;
 
-            let filtered = guests.filter(g => {
-                const matchSearch = g.nombre.toLowerCase().includes(searchQuery) || 
-                                    g.mesa.toLowerCase().includes(searchQuery) ||
-                                    (g.nota && g.nota.toLowerCase().includes(searchQuery));
+            // RENDER VISTA 1: LISTA INDIVIDUAL
+            if (activeMainView === 'list') {
+                let filtered = guests.filter(g => {
+                    const matchSearch = g.nombre.toLowerCase().includes(searchQuery) || 
+                                        g.mesa.toLowerCase().includes(searchQuery) ||
+                                        (g.nota && g.nota.toLowerCase().includes(searchQuery));
 
-                if (!matchSearch) return false;
+                    if (!matchSearch) return false;
 
-                if (currentFilter === 'pending') return !g.arrived;
-                if (currentFilter === 'arrived') return g.arrived;
-                return true;
-            });
+                    if (currentFilter === 'pending') return !g.arrived;
+                    if (currentFilter === 'arrived') return g.arrived;
+                    return true;
+                });
 
-            if (filtered.length === 0) {
-                container.innerHTML = '';
-                emptyState.classList.remove('hidden');
-                return;
+                if (filtered.length === 0) {
+                    container.innerHTML = '';
+                    emptyState.classList.remove('hidden');
+                } else {
+                    emptyState.classList.add('hidden');
+                    container.innerHTML = filtered.map(g => renderGuestCard(g)).join('');
+                }
             }
 
-            emptyState.classList.add('hidden');
-            container.innerHTML = filtered.map(g => `
-                <div class="bg-white border ${g.arrived ? 'border-emerald-300 bg-emerald-50/30' : 'border-lila-100'} rounded-2xl p-4 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-3">
+            // RENDER VISTA 2: DESGLOSE POR MESAS
+            if (activeMainView === 'tables') {
+                // Agrupar por mesa
+                const tablesMap = {};
+                guests.forEach(g => {
+                    const m = g.mesa.toUpperCase().trim() || 'SIN MESA';
+                    if (!tablesMap[m]) tablesMap[m] = [];
+                    tablesMap[m].push(g);
+                });
+
+                const tableKeys = Object.keys(tablesMap).sort((a,b) => {
+                    if (a.includes('PRINCIPAL')) return -1;
+                    if (b.includes('PRINCIPAL')) return 1;
+                    return a.localeCompare(b, undefined, {numeric: true});
+                });
+
+                document.getElementById('table-count-badge').textContent = `${tableKeys.length} Mesas`;
+
+                tablesContainer.innerHTML = tableKeys.map(tableName => {
+                    const tableGuests = tablesMap[tableName];
+                    const arrivedInTable = tableGuests.filter(g => g.arrived);
+                    const pendingInTable = tableGuests.filter(g => !g.arrived);
+                    const isExpanded = expandedTables[tableName] !== false; // Abierto por defecto
+
+                    const percent = Math.round((arrivedInTable.length / tableGuests.length) * 100);
+
+                    return `
+                        <div class="bg-white border border-lila-100 rounded-2xl shadow-xs overflow-hidden transition">
+                            <!-- Header de la Mesa -->
+                            <div onclick="toggleTableAccordion('${tableName}')" class="p-4 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-lila-50/50 transition">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-lila-100 text-lila-700 flex items-center justify-center font-extrabold text-sm">
+                                        <i class="fa-solid fa-chair"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-extrabold text-gray-900 text-base flex items-center gap-2">
+                                            <span>${tableName}</span>
+                                            <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 font-sans">
+                                                Total: ${tableGuests.length}
+                                            </span>
+                                        </h3>
+                                        <div class="flex items-center gap-3 text-xs mt-0.5 font-medium">
+                                            <span class="text-emerald-600 font-bold"><i class="fa-solid fa-circle text-[8px] mr-1"></i>Llegaron: ${arrivedInTable.length}</span>
+                                            <span class="text-lila-600 font-bold"><i class="fa-solid fa-circle text-[8px] mr-1"></i>Faltan: ${pendingInTable.length}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-3 self-end sm:self-auto">
+                                    <!-- Barrita de Progreso -->
+                                    <div class="w-24 bg-gray-100 h-2 rounded-full overflow-hidden border border-gray-200">
+                                        <div class="bg-emerald-500 h-full transition-all duration-500" style="width: ${percent}%"></div>
+                                    </div>
+                                    <span class="text-xs font-bold text-gray-400 w-8 text-right">${percent}%</span>
+                                    <i class="fa-solid fa-chevron-${isExpanded ? 'up' : 'down'} text-gray-400 text-xs ml-1"></i>
+                                </div>
+                            </div>
+
+                            <!-- Desglose de Personas -->
+                            ${isExpanded ? `
+                                <div class="border-t border-lila-100 p-3 bg-lila-50/30 space-y-2">
+                                    ${tableGuests.map(g => renderGuestCard(g, false)).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function renderGuestCard(g, showMesaBadge = true) {
+            return `
+                <div class="bg-white border ${g.arrived ? 'border-emerald-300 bg-emerald-50/30' : 'border-lila-100'} rounded-2xl p-3.5 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-3">
                     
-                    <div class="flex items-center gap-3.5 min-w-0 flex-grow cursor-pointer" onclick="toggleArrival('${g.id}')">
-                        <div class="w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center font-bold text-base transition-colors ${g.arrived ? 'bg-emerald-100 text-emerald-700' : 'bg-lila-100 text-lila-700'}">
-                            ${g.arrived ? '<i class="fa-solid fa-check text-lg"></i>' : g.nombre.charAt(0).toUpperCase()}
+                    <div class="flex items-center gap-3 min-w-0 flex-grow cursor-pointer" onclick="toggleArrival('${g.id}')">
+                        <div class="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-bold text-sm transition-colors ${g.arrived ? 'bg-emerald-100 text-emerald-700' : 'bg-lila-100 text-lila-700'}">
+                            ${g.arrived ? '<i class="fa-solid fa-check text-base"></i>' : g.nombre.charAt(0).toUpperCase()}
                         </div>
                         <div class="min-w-0 flex-grow">
-                            <h4 class="font-extrabold text-gray-900 text-base leading-tight truncate transition-all ${g.arrived ? 'line-through text-gray-400' : ''}">
+                            <h4 class="font-extrabold text-gray-900 text-sm leading-tight truncate transition-all ${g.arrived ? 'line-through text-gray-400' : ''}">
                                 ${g.nombre}
                             </h4>
-                            <div class="flex flex-wrap items-center gap-2 mt-1 text-xs">
-                                <span class="bg-lila-100 text-lila-800 border border-lila-200 px-2.5 py-0.5 rounded-lg font-bold tracking-wide">
-                                    <i class="fa-solid fa-chair mr-1 opacity-70"></i>${g.mesa}
-                                </span>
+                            <div class="flex flex-wrap items-center gap-1.5 mt-1 text-[11px]">
+                                ${showMesaBadge ? `
+                                    <span class="bg-lila-100 text-lila-800 border border-lila-200 px-2 py-0.5 rounded-lg font-bold">
+                                        <i class="fa-solid fa-chair mr-1 opacity-70"></i>${g.mesa}
+                                    </span>
+                                ` : ''}
                                 ${g.nota ? `<span class="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-lg font-semibold"><i class="fa-solid fa-circle-info mr-1 opacity-70"></i>${g.nota}</span>` : ''}
-                                ${g.arrived && g.time ? `<span class="text-emerald-600 font-bold flex items-center gap-1"><i class="fa-regular fa-clock"></i> Llegó ${g.time}</span>` : ''}
+                                ${g.arrived && g.time ? `<span class="text-emerald-600 font-bold flex items-center gap-1"><i class="fa-regular fa-clock"></i> ${g.time}</span>` : ''}
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-1.5 flex-shrink-0">
-                        <button onclick="openModal('${g.id}')" title="Editar" class="w-9 h-9 rounded-xl text-gray-400 hover:text-lila-700 hover:bg-lila-50 flex items-center justify-center transition">
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                        <button onclick="openModal('${g.id}')" title="Editar" class="w-8 h-8 rounded-lg text-gray-400 hover:text-lila-700 hover:bg-lila-50 flex items-center justify-center transition">
                             <i class="fa-solid fa-pen text-xs"></i>
                         </button>
-                        <button onclick="deleteGuest('${g.id}')" title="Eliminar" class="w-9 h-9 rounded-xl text-gray-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition">
+                        <button onclick="deleteGuest('${g.id}')" title="Eliminar" class="w-8 h-8 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition">
                             <i class="fa-solid fa-trash-can text-xs"></i>
                         </button>
-                        <button onclick="toggleArrival('${g.id}')" class="ml-1 px-4 py-2.5 rounded-xl font-bold text-xs transition active:scale-95 flex items-center gap-1.5 shadow-sm ${g.arrived ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-lila-600 text-white hover:bg-lila-700'}">
+                        <button onclick="toggleArrival('${g.id}')" class="ml-1 px-3 py-2 rounded-xl font-bold text-xs transition active:scale-95 flex items-center gap-1.5 shadow-xs ${g.arrived ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-lila-600 text-white hover:bg-lila-700'}">
                             <i class="fa-solid ${g.arrived ? 'fa-check-double' : 'fa-right-to-bracket'}"></i>
                             <span class="hidden sm:inline">${g.arrived ? 'Ingresó' : 'Registrar'}</span>
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `;
         }
 
         let toastTimeout = null;
