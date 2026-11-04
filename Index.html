@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recepción & Check-in de Invitados</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        lila: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            300: '#c4b5fd',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #faf8ff;
+            color: #1e1b4b;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f5f3ff;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c4b5fd;
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-lila-200">
+
+    <!-- Header Principal -->
+    <header class="bg-white border-b border-lila-100 sticky top-0 z-30 shadow-sm backdrop-blur-md bg-opacity-95">
+        <div class="max-w-4xl mx-auto px-4 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            
+            <!-- Branding & Logo Empresa -->
+            <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+                <div class="flex items-center gap-3">
+                    <div class="relative group cursor-pointer" onclick="document.getElementById('logo-file-input').click()" title="Haz clic para subir el logo de tu empresa">
+                        <div id="logo-container" class="w-12 h-12 rounded-2xl bg-lila-100 text-lila-700 flex items-center justify-center font-bold overflow-hidden border border-lila-200 shadow-inner">
+                            <i class="fa-solid fa-crown text-xl" id="default-logo-icon"></i>
+                            <img id="custom-logo-img" class="w-full h-full object-cover hidden" alt="Logo Empresa">
+                        </div>
+                        <div class="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i class="fa-solid fa-camera text-white text-xs"></i>
+                        </div>
+                    </div>
+                    <input type="file" id="logo-file-input" accept="image/*" class="hidden" onchange="uploadCustomLogo(event)">
+                    
+                    <div>
+                        <h1 class="font-extrabold text-lg text-gray-900 leading-tight">Recepción de Invitados</h1>
+                        <p class="text-xs text-lila-600 font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-sparkles text-[10px]"></i>
+                            <span>Organización de Eventos</span>
+                        </p>
+                    </div>
+                </div>
+
+                <button onclick="openModal()" class="sm:hidden bg-lila-600 hover:bg-lila-700 text-white p-3 rounded-xl text-sm font-semibold shadow-md active:scale-95 transition">
+                    <i class="fa-solid fa-user-plus text-base"></i>
+                </button>
+            </div>
+
+            <!-- Contadores Superiores -->
+            <div class="grid grid-cols-3 gap-2 w-full sm:w-auto text-center">
+                <div class="bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-xl">
+                    <span class="block text-[10px] uppercase font-bold text-gray-400 tracking-wider">Total</span>
+                    <span id="stat-total" class="text-base font-extrabold text-gray-800">0</span>
+                </div>
+                <div class="bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
+                    <span class="block text-[10px] uppercase font-bold text-emerald-600 tracking-wider">Llegaron</span>
+                    <span id="stat-arrived" class="text-base font-extrabold text-emerald-700">0</span>
+                </div>
+                <div class="bg-lila-50 border border-lila-200 px-3 py-1.5 rounded-xl">
+                    <span class="block text-[10px] uppercase font-bold text-lila-600 tracking-wider">Faltan</span>
+                    <span id="stat-pending" class="text-base font-extrabold text-lila-700">0</span>
+                </div>
+            </div>
+
+            <button onclick="openModal()" class="hidden sm:flex items-center gap-2 bg-lila-600 hover:bg-lila-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition active:scale-95">
+                <i class="fa-solid fa-user-plus"></i>
+                <span>Nuevo Invitado</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="max-w-4xl mx-auto px-4 py-6 w-full flex-grow">
+        
+        <!-- Buscador y Filtros -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-lila-100 mb-6 space-y-4">
+            
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-lila-400">
+                    <i class="fa-solid fa-magnifying-glass text-lg"></i>
+                </span>
+                <input type="text" id="search-input" oninput="handleSearch()" placeholder="Buscar por nombre, apellido o mesa..." 
+                    class="w-full pl-11 pr-10 py-3.5 bg-lila-50/40 border border-lila-200 rounded-xl text-gray-800 placeholder-lila-300 text-base font-medium focus:outline-none focus:ring-2 focus:ring-lila-500 focus:bg-white transition">
+                <button onclick="clearSearch()" id="clear-search-btn" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 hidden">
+                    <i class="fa-solid fa-circle-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Tabs de Filtro -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                <button onclick="setFilter('all')" id="filter-all" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition bg-lila-600 text-white shadow-sm">
+                    Todos (<span id="count-all">0</span>)
+                </button>
+                <button onclick="setFilter('pending')" id="filter-pending" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition bg-gray-100 text-gray-600 hover:bg-gray-200">
+                    Pendientes (<span id="count-pending">0</span>)
+                </button>
+                <button onclick="setFilter('arrived')" id="filter-arrived" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition bg-gray-100 text-gray-600 hover:bg-gray-200">
+                    Ya llegaron (<span id="count-arrived">0</span>)
+                </button>
+            </div>
+        </div>
+
+        <!-- Lista Dinámica de Invitados -->
+        <div id="guests-container" class="space-y-3"></div>
+
+        <div id="empty-state" class="hidden flex flex-col items-center justify-center py-16 px-4 text-center">
+            <div class="w-16 h-16 bg-lila-100 text-lila-500 rounded-full flex items-center justify-center text-2xl mb-3 shadow-inner">
+                <i class="fa-solid fa-user-slash"></i>
+            </div>
+            <h3 class="text-gray-800 font-bold text-lg">No se encontraron invitados</h3>
+            <p class="text-gray-500 text-sm max-w-xs mt-1">Verifica la búsqueda o cambia el filtro de la parte superior.</p>
+        </div>
+
+    </main>
+
+    <footer class="text-center py-6 text-xs text-gray-400 border-t border-lila-100/60 bg-white/50">
+        <p class="font-medium text-gray-500">Sistema de Control de Asistencia • Event Planner</p>
+        <button onclick="resetData()" class="mt-2 text-lila-600 hover:text-lila-800 underline font-semibold transition">Restaurar lista original completa</button>
+    </footer>
+
+    <!-- Modal Nuevo Invitado -->
+    <div id="guest-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl transform scale-95 transition-transform duration-300" id="modal-content">
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="modal-title" class="font-bold text-lg text-gray-900">Agregar Nuevo Invitado</h3>
+                <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <form id="guest-form" onsubmit="saveGuest(event)" class="space-y-4">
+                <input type="hidden" id="guest-id">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Completo *</label>
+                    <input type="text" id="input-nombre" required placeholder="Ej. Juan Pérez" 
+                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-lila-500 focus:bg-white transition">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Mesa Asignada *</label>
+                        <input type="text" id="input-mesa" required placeholder="Ej. MESA 1" 
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-lila-500 focus:bg-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Estatus / Nota</label>
+                        <input type="text" id="input-nota" placeholder="Ej. Confirmado / VIP" 
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-lila-500 focus:bg-white transition">
+                    </div>
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closeModal()" class="w-1/2 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold rounded-xl text-sm transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="w-1/2 py-3 bg-lila-600 hover:bg-lila-700 text-white font-bold rounded-xl text-sm shadow-md transition">
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 bg-gray-900 text-white px-4 py-3 rounded-2xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toast-message" class="text-sm font-semibold">Operación exitosa</span>
+    </div>
+
+    <script>
+        const initialGuestsData = [
+            // MESA 1
+            { id: '1', nombre: 'Maria Hurtado', mesa: 'MESA 1', nota: '', arrived: false, time: null },
+            { id: '2', nombre: 'Manuel Peralta', mesa: 'MESA 1', nota: '', arrived: false, time: null },
+            { id: '3', nombre: 'Willy Florian', mesa: 'MESA 1', nota: '', arrived: false, time: null },
+            { id: '4', nombre: 'Vianny Reyes', mesa: 'MESA 1', nota: '', arrived: false, time: null },
+            { id: '5', nombre: 'Elaine Pimentel', mesa: 'MESA 1', nota: '', arrived: false, time: null },
+            { id: '6', nombre: 'Jared Pimentel', mesa: 'MESA 1', nota: '', arrived: false, time: null },
+            { id: '7', nombre: 'Lizmery Peralta', mesa: 'MESA 1', nota: '', arrived: false, time: null },
+            { id: '8', nombre: 'Orlando Lahoz', mesa: 'MESA 1', nota: '', arrived: false, time: null },
+
+            // MESA 2
+            { id: '9', nombre: 'Carmen Morales', mesa: 'MESA 2', nota: '', arrived: false, time: null },
+            { id: '10', nombre: 'Cruz Santana', mesa: 'MESA 2', nota: '', arrived: false, time: null },
+            { id: '11', nombre: 'Celin Rubio', mesa: 'MESA 2', nota: '', arrived: false, time: null },
+            { id: '12', nombre: 'Stephania Rubio', mesa: 'MESA 2', nota: '', arrived: false, time: null },
+            { id: '13', nombre: 'Demetrio Vazquez', mesa: 'MESA 2', nota: '', arrived: false, time: null },
+            { id: '14', nombre: 'Rafael Navarro', mesa: 'MESA 2', nota: '', arrived: false, time: null },
+            { id: '15', nombre: 'Maria Morales', mesa: 'MESA 2', nota: '', arrived: false, time: null },
+
+            // MESA 3
+            { id: '16', nombre: 'Nallely Montero', mesa: 'MESA 3', nota: '', arrived: false, time: null },
+            { id: '17', nombre: 'Elias García', mesa: 'MESA 3', nota: '', arrived: false, time: null },
+            { id: '18', nombre: 'Franchesca García', mesa: 'MESA 3', nota: '', arrived: false, time: null },
+            { id: '19', nombre: 'Andres Contreras', mesa: 'MESA 3', nota: '', arrived: false, time: null },
+            { id: '20', nombre: 'Josue Hazoury', mesa: 'MESA 3', nota: '', arrived: false, time: null },
+            { id: '21', nombre: 'Kimberly Mesa', mesa: 'MESA 3', nota: '', arrived: false, time: null },
+            { id: '22', nombre: 'Genaro Soriano', mesa: 'MESA 3', nota: '', arrived: false, time: null },
+
+            // MESA 4
+            { id: '23', nombre: 'Juan Emil Florencio', mesa: 'MESA 4', nota: '', arrived: false, time: null },
+            { id: '24', nombre: 'Betzy Alcantara', mesa: 'MESA 4', nota: '', arrived: false, time: null },
+            { id: '25', nombre: 'Felix Ramonell', mesa: 'MESA 4', nota: '', arrived: false, time: null },
+            { id: '26', nombre: 'Karla Reyes', mesa: 'MESA 4', nota: '', arrived: false, time: null },
+            { id: '27', nombre: 'Esthefani Perez', mesa: 'MESA 4', nota: '', arrived: false, time: null },
+            { id: '28', nombre: 'German Tavarez', mesa: 'MESA 4', nota: '', arrived: false, time: null },
+            { id: '29', nombre: 'Genesis Céspedes', mesa: 'MESA 4', nota: '', arrived: false, time: null },
+            { id: '30', nombre: 'Anabelle Morales', mesa: 'MESA 4', nota: '', arrived: false, time: null },
+
+            // MESA 5
+            { id: '31', nombre: 'David Marmolejos', mesa: 'MESA 5', nota: '', arrived: false, time: null },
+            { id: '32', nombre: 'Joan Rodriguez', mesa: 'MESA 5', nota: '', arrived: false, time: null },
+            { id: '33', nombre: 'Diego Cabrera', mesa: 'MESA 5', nota: '', arrived: false, time: null },
+            { id: '34', nombre: 'Martin de la Cruz', mesa: 'MESA 5', nota: '', arrived: false, time: null },
+            { id: '35', nombre: 'Johissa Marmolejos', mesa: 'MESA 5', nota: '', arrived: false, time: null },
+            { id: '36', nombre: 'Luis Duluc', mesa: 'MESA 5', nota: '', arrived: false, time: null },
+            { id: '37', nombre: 'Andrea Ramirez', mesa: 'MESA 5', nota: '', arrived: false, time: null },
+            { id: '38', nombre: 'Luis Reynoso', mesa: 'MESA 5', nota: '', arrived: false, time: null },
+
+            // MESA 6
+            { id: '39', nombre: 'Cristina Peralta', mesa: 'MESA 6', nota: '', arrived: false, time: null },
+            { id: '40', nombre: 'Frank Amore', mesa: 'MESA 6', nota: '', arrived: false, time: null },
+            { id: '41', nombre: 'Maria Peralta', mesa: 'MESA 6', nota: '', arrived: false, time: null },
+            { id: '42', nombre: 'Rafael Tactuk', mesa: 'MESA 6', nota: '', arrived: false, time: null },
+            { id: '43', nombre: 'Narcisa Peralta', mesa: 'MESA 6', nota: '', arrived: false, time: null },
+            { id: '44', nombre: 'Agustin Martinez', mesa: 'MESA 6', nota: '', arrived: false, time: null },
+            { id: '45', nombre: 'Ramona Plasencia', mesa: 'MESA 6', nota: '', arrived: false, time: null },
+            { id: '46', nombre: 'Jesus Guerrero', mesa: 'MESA 6', nota: '', arrived: false, time: null },
+
+            // MESA 7
+            { id: '47', nombre: 'Sida Medina', mesa: 'MESA 7', nota: '', arrived: false, time: null },
+            { id: '48', nombre: 'Ramon Gonzalez', mesa: 'MESA 7', nota: '', arrived: false, time: null },
+            { id: '49', nombre: 'Tania Gonzalez', mesa: 'MESA 7', nota: '', arrived: false, time: null },
+            { id: '50', nombre: 'Joelle Exarhakos', mesa: 'MESA 7', nota: '', arrived: false, time: null },
+            { id: '51', nombre: 'Tony Delgado', mesa: 'MESA 7', nota: '', arrived: false, time: null },
+            { id: '52', nombre: 'Marly Peralta', mesa: 'MESA 7', nota: '', arrived: false, time: null },
+            { id: '53', nombre: 'Nydia Cano', mesa: 'MESA 7', nota: '', arrived: false, time: null },
+
+            // MESA 8
+            { id: '54', nombre: 'Alina Marte', mesa: 'MESA 8', nota: '', arrived: false, time: null },
+            { id: '55', nombre: 'Dariel Romero', mesa: 'MESA 8', nota: '', arrived: false, time: null },
+            { id: '56', nombre: 'Vanelssy Lachapell', mesa: 'MESA 8', nota: '', arrived: false, time: null },
+            { id: '57', nombre: 'Rosaura Castillo', mesa: 'MESA 8', nota: '', arrived: false, time: null },
+            { id: '58', nombre: 'Yassiel Villaman', mesa: 'MESA 8', nota: '', arrived: false, time: null },
+            { id: '59', nombre: 'Jose Romanace', mesa: 'MESA 8', nota: '', arrived: false, time: null },
+            { id: '60', nombre: 'Kiara Polanco', mesa: 'MESA 8', nota: '', arrived: false, time: null },
+            { id: '61', nombre: 'Luis Duverge', mesa: 'MESA 8', nota: '', arrived: false, time: null },
+
+            // MESA 9
+            { id: '62', nombre: 'Billy Santana', mesa: 'MESA 9', nota: '', arrived: false, time: null },
+            { id: '63', nombre: 'Dahiana Pinales', mesa: 'MESA 9', nota: '', arrived: false, time: null },
+            { id: '64', nombre: 'Manuel Santana', mesa: 'MESA 9', nota: '', arrived: false, time: null },
+            { id: '65', nombre: 'Belkis Ramirez', mesa: 'MESA 9', nota: '', arrived: false, time: null },
+            { id: '66', nombre: 'Cruz Baez', mesa: 'MESA 9', nota: 'Por Confirmar', arrived: false, time: null },
+            { id: '67', nombre: 'Alito Mejía', mesa: 'MESA 9', nota: 'Por Confirmar', arrived: false, time: null },
+            { id: '68', nombre: 'Acompañante 1', mesa: 'MESA 9', nota: 'Por Confirmar', arrived: false, time: null },
+            { id: '69', nombre: 'Acompañante 2', mesa: 'MESA 9', nota: 'Por Confirmar', arrived: false, time: null },
+
+            // MESA 10
+            { id: '70', nombre: 'Gian Franco Regalado', mesa: 'MESA 10', nota: '', arrived: false, time: null },
+            { id: '71', nombre: 'Jennifer Alies', mesa: 'MESA 10', nota: '', arrived: false, time: null },
+            { id: '72', nombre: 'Julio Angel Morales', mesa: 'MESA 10', nota: '', arrived: false, time: null },
+            { id: '73', nombre: 'Karina Barrientos', mesa: 'MESA 10', nota: '', arrived: false, time: null },
+            { id: '74', nombre: 'Dany Angel de León', mesa: 'MESA 10', nota: '', arrived: false, time: null },
+            { id: '75', nombre: 'Genesis Diaz', mesa: 'MESA 10', nota: '', arrived: false, time: null },
+            { id: '76', nombre: 'Alisson Regalado', mesa: 'MESA 10', nota: '', arrived: false, time: null },
+
+            // MESA 11
+            { id: '77', nombre: 'Angel Santana', mesa: 'MESA 11', nota: '', arrived: false, time: null },
+            { id: '78', nombre: 'Nelly Santana', mesa: 'MESA 11', nota: '', arrived: false, time: null },
+            { id: '79', nombre: 'Radames Santana', mesa: 'MESA 11', nota: '', arrived: false, time: null },
+            { id: '80', nombre: 'Dianela Santana', mesa: 'MESA 11', nota: '', arrived: false, time: null },
+            { id: '81', nombre: 'Juan Eddy Santana', mesa: 'MESA 11', nota: '', arrived: false, time: null },
+            { id: '82', nombre: 'Yokasta Colón', mesa: 'MESA 11', nota: '', arrived: false, time: null },
+            { id: '83', nombre: 'Wellington Santana', mesa: 'MESA 11', nota: '', arrived: false, time: null },
+            { id: '84', nombre: 'Xiomara Diaz Rosario', mesa: 'MESA 11', nota: '', arrived: false, time: null },
+
+            // MESA 12
+            { id: '85', nombre: 'Mathias Reynoso', mesa: 'MESA 12', nota: '', arrived: false, time: null },
+            { id: '86', nombre: 'Ana Cristina Abreu', mesa: 'MESA 12', nota: '', arrived: false, time: null },
+            { id: '87', nombre: 'Jean Carlos Francisco', mesa: 'MESA 12', nota: '', arrived: false, time: null },
+            { id: '88', nombre: 'Laura Rodriguez', mesa: 'MESA 12', nota: '', arrived: false, time: null },
+            { id: '89', nombre: 'Katherine Candelario', mesa: 'MESA 12', nota: '', arrived: false, time: null },
+            { id: '90', nombre: 'Elvis Collado', mesa: 'MESA 12', nota: '', arrived: false, time: null },
+            { id: '91', nombre: 'Steven Peralta', mesa: 'MESA 12', nota: '', arrived: false, time: null },
+            { id: '92', nombre: 'Angelys Antoine', mesa: 'MESA 12', nota: '', arrived: false, time: null },
+
+            // MESA 13
+            { id: '93', nombre: 'Karen Santana', mesa: 'MESA 13', nota: '', arrived: false, time: null },
+            { id: '94', nombre: 'Yerabelis Santana', mesa: 'MESA 13', nota: '', arrived: false, time: null },
+            { id: '95', nombre: 'Alejandra Santana', mesa: 'MESA 13', nota: '', arrived: false, time: null },
+            { id: '96', nombre: 'Ivanka Santana', mesa: 'MESA 13', nota: '', arrived: false, time: null },
+            { id: '97', nombre: 'Omar Santana', mesa: 'MESA 13', nota: '', arrived: false, time: null },
+            { id: '98', nombre: 'Erika Morales', mesa: 'MESA 13', nota: '', arrived: false, time: null },
+            { id: '99', nombre: 'Cesar Alvarez', mesa: 'MESA 13', nota: '', arrived: false, time: null },
+            { id: '100', nombre: 'Leticia Gonzalez', mesa: 'MESA 13', nota: '', arrived: false, time: null },
+
+            // MESA PRINCIPAL
+            { id: '101', nombre: 'Enmanuel Peralta', mesa: 'MESA PRINCIPAL', nota: 'Anfitrión', arrived: false, time: null },
+            { id: '102', nombre: 'Nicandra Santana', mesa: 'MESA PRINCIPAL', nota: 'Anfitriona', arrived: false, time: null }
+        ];
+
+        let guests = [];
+        let currentFilter = 'all'; 
+        let searchQuery = '';
+
+        window.onload = function() {
+            loadGuests();
+            loadLogo();
+            renderApp();
+        };
+
+        function loadGuests() {
+            const stored = localStorage.getItem('lila_event_guests_v2');
+            if (stored) {
+                try {
+                    guests = JSON.parse(stored);
+                } catch (e) {
+                    guests = initialGuestsData;
+                }
+            } else {
+                guests = initialGuestsData;
+                saveToStorage();
+            }
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('lila_event_guests_v2', JSON.stringify(guests));
+        }
+
+        function resetData() {
+            if (confirm('¿Restablecer la lista completa con los 102 invitados originales?')) {
+                guests = initialGuestsData;
+                saveToStorage();
+                renderApp();
+                showToast('Lista restablecida correctamente', 'info');
+            }
+        }
+
+        function uploadCustomLogo(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const base64Image = e.target.result;
+                    localStorage.setItem('lila_event_custom_logo', base64Image);
+                    displayLogo(base64Image);
+                    showToast('Logo cargado correctamente', 'success');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function loadLogo() {
+            const storedLogo = localStorage.getItem('lila_event_custom_logo');
+            if (storedLogo) {
+                displayLogo(storedLogo);
+            }
+        }
+
+        function displayLogo(src) {
+            const img = document.getElementById('custom-logo-img');
+            const icon = document.getElementById('default-logo-icon');
+            img.src = src;
+            img.classList.remove('hidden');
+            icon.classList.add('hidden');
+        }
+
+        function handleSearch() {
+            const input = document.getElementById('search-input');
+            searchQuery = input.value.toLowerCase().trim();
+            const clearBtn = document.getElementById('clear-search-btn');
+            
+            if (searchQuery.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            renderApp();
+        }
+
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            searchQuery = '';
+            document.getElementById('clear-search-btn').classList.add('hidden');
+            renderApp();
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.className = "filter-btn px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition bg-gray-100 text-gray-600 hover:bg-gray-200";
+            });
+
+            const activeBtn = document.getElementById(`filter-${filter}`);
+            activeBtn.className = "filter-btn px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition bg-lila-600 text-white shadow-sm";
+
+            renderApp();
+        }
+
+        function toggleArrival(id) {
+            const guest = guests.find(g => g.id === id);
+            if (guest) {
+                guest.arrived = !guest.arrived;
+                if (guest.arrived) {
+                    const now = new Date();
+                    guest.time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    showToast(`¡${guest.nombre} ha ingresado! (${guest.mesa})`, 'success');
+                } else {
+                    guest.time = null;
+                    showToast(`Se anuló el ingreso de ${guest.nombre}`, 'warning');
+                }
+                saveToStorage();
+                renderApp();
+            }
+        }
+
+        function openModal(id = null) {
+            const modal = document.getElementById('guest-modal');
+            const modalContent = document.getElementById('modal-content');
+            const title = document.getElementById('modal-title');
+            
+            document.getElementById('guest-form').reset();
+            document.getElementById('guest-id').value = '';
+
+            if (id) {
+                title.textContent = "Editar Invitado";
+                const guest = guests.find(g => g.id === id);
+                if (guest) {
+                    document.getElementById('guest-id').value = guest.id;
+                    document.getElementById('input-nombre').value = guest.nombre;
+                    document.getElementById('input-mesa').value = guest.mesa || '';
+                    document.getElementById('input-nota').value = guest.nota || '';
+                }
+            } else {
+                title.textContent = "Agregar Invitado de Imprevisto";
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95');
+                modalContent.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('guest-modal');
+            const modalContent = document.getElementById('modal-content');
+            
+            modal.classList.add('opacity-0');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function saveGuest(event) {
+            event.preventDefault();
+            const id = document.getElementById('guest-id').value;
+            const nombre = document.getElementById('input-nombre').value.trim();
+            const mesa = document.getElementById('input-mesa').value.trim();
+            const nota = document.getElementById('input-nota').value.trim();
+
+            if (id) {
+                const guest = guests.find(g => g.id === id);
+                if (guest) {
+                    guest.nombre = nombre;
+                    guest.mesa = mesa;
+                    guest.nota = nota;
+                    showToast('Datos de invitado actualizados', 'success');
+                }
+            } else {
+                const newGuest = {
+                    id: Date.now().toString(),
+                    nombre: nombre,
+                    mesa: mesa,
+                    nota: nota || 'Imprevisto',
+                    arrived: true,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                };
+                guests.unshift(newGuest);
+                showToast(`Registrado e ingresado en ${mesa}`, 'success');
+            }
+
+            saveToStorage();
+            closeModal();
+            renderApp();
+        }
+
+        function deleteGuest(id) {
+            const guest = guests.find(g => g.id === id);
+            if (confirm(`¿Eliminar a ${guest.nombre} de la lista?`)) {
+                guests = guests.filter(g => g.id !== id);
+                saveToStorage();
+                renderApp();
+                showToast('Invitado eliminado', 'info');
+            }
+        }
+
+        function renderApp() {
+            const container = document.getElementById('guests-container');
+            const emptyState = document.getElementById('empty-state');
+
+            const totalCount = guests.length;
+            const arrivedCount = guests.filter(g => g.arrived).length;
+            const pendingCount = totalCount - arrivedCount;
+
+            document.getElementById('stat-total').textContent = totalCount;
+            document.getElementById('stat-arrived').textContent = arrivedCount;
+            document.getElementById('stat-pending').textContent = pendingCount;
+
+            document.getElementById('count-all').textContent = totalCount;
+            document.getElementById('count-pending').textContent = pendingCount;
+            document.getElementById('count-arrived').textContent = arrivedCount;
+
+            let filtered = guests.filter(g => {
+                const matchSearch = g.nombre.toLowerCase().includes(searchQuery) || 
+                                    g.mesa.toLowerCase().includes(searchQuery) ||
+                                    (g.nota && g.nota.toLowerCase().includes(searchQuery));
+
+                if (!matchSearch) return false;
+
+                if (currentFilter === 'pending') return !g.arrived;
+                if (currentFilter === 'arrived') return g.arrived;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            container.innerHTML = filtered.map(g => `
+                <div class="bg-white border ${g.arrived ? 'border-emerald-300 bg-emerald-50/30' : 'border-lila-100'} rounded-2xl p-4 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-3">
+                    
+                    <div class="flex items-center gap-3.5 min-w-0 flex-grow cursor-pointer" onclick="toggleArrival('${g.id}')">
+                        <div class="w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center font-bold text-base transition-colors ${g.arrived ? 'bg-emerald-100 text-emerald-700' : 'bg-lila-100 text-lila-700'}">
+                            ${g.arrived ? '<i class="fa-solid fa-check text-lg"></i>' : g.nombre.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="min-w-0 flex-grow">
+                            <h4 class="font-extrabold text-gray-900 text-base leading-tight truncate transition-all ${g.arrived ? 'line-through text-gray-400' : ''}">
+                                ${g.nombre}
+                            </h4>
+                            <div class="flex flex-wrap items-center gap-2 mt-1 text-xs">
+                                <span class="bg-lila-100 text-lila-800 border border-lila-200 px-2.5 py-0.5 rounded-lg font-bold tracking-wide">
+                                    <i class="fa-solid fa-chair mr-1 opacity-70"></i>${g.mesa}
+                                </span>
+                                ${g.nota ? `<span class="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-lg font-semibold"><i class="fa-solid fa-circle-info mr-1 opacity-70"></i>${g.nota}</span>` : ''}
+                                ${g.arrived && g.time ? `<span class="text-emerald-600 font-bold flex items-center gap-1"><i class="fa-regular fa-clock"></i> Llegó ${g.time}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        <button onclick="openModal('${g.id}')" title="Editar" class="w-9 h-9 rounded-xl text-gray-400 hover:text-lila-700 hover:bg-lila-50 flex items-center justify-center transition">
+                            <i class="fa-solid fa-pen text-xs"></i>
+                        </button>
+                        <button onclick="deleteGuest('${g.id}')" title="Eliminar" class="w-9 h-9 rounded-xl text-gray-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                        <button onclick="toggleArrival('${g.id}')" class="ml-1 px-4 py-2.5 rounded-xl font-bold text-xs transition active:scale-95 flex items-center gap-1.5 shadow-sm ${g.arrived ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-lila-600 text-white hover:bg-lila-700'}">
+                            <i class="fa-solid ${g.arrived ? 'fa-check-double' : 'fa-right-to-bracket'}"></i>
+                            <span class="hidden sm:inline">${g.arrived ? 'Ingresó' : 'Registrar'}</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        let toastTimeout = null;
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMessage.textContent = message;
+            
+            if (type === 'success') {
+                toastIcon.className = "fa-solid fa-circle-check text-emerald-400 text-lg";
+            } else if (type === 'warning') {
+                toastIcon.className = "fa-solid fa-triangle-exclamation text-amber-400 text-lg";
+            } else {
+                toastIcon.className = "fa-solid fa-circle-info text-sky-400 text-lg";
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
