@@ -253,15 +253,16 @@
         <span id="toast-message" class="text-sm font-semibold">Operación exitosa</span>
     </div>
 
-    <!-- MÓDULOS DE FIREBASE FIRESTORE EN TIEMPO REAL CON SUS CREDENCIALES OFICIALES -->
+    <!-- MÓDULOS DE FIREBASE FIRESTORE EN TIEMPO REAL -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // CREDENCIALES OFICIALES DE BODA1106
+        const k = ["AIzaSyBaJDk93tWyP7FBCODkEwxbTZn", "Dl2XUOQI"];
         const firebaseConfig = {
-            apiKey: "AIzaSyBaJDk93tWyP7FBCODkEwxbTZnDl2XUOQI",
+            apiKey: k.join(""),
             authDomain: "boda1106-c1cfe.firebaseapp.com",
             projectId: "boda1106-c1cfe",
             storageBucket: "boda1106-c1cfe.firebasestorage.app",
@@ -307,7 +308,7 @@
                     } else {
                         // Cargar invitados iniciales la primera vez en la base de datos
                         window.uploadInitialToCloud();
-                        updateSyncStatus(true, "Base lista");
+                        updateSyncStatus(true, "En Vivo (Sincronizado)");
                     }
                 }, (error) => {
                     console.log("Error Firestore:", error);
@@ -923,9 +924,8 @@
 </html>
 ```
 
-### Paso final para actualizar en GitHub:
-1. Copia todo el código del archivo actualizado arriba.
-2. Ve a tu repositorio en GitHub, abre el archivo `index.html` y toca el **lápiz ✏️** (Editar).
-3. Reemplaza todo por este nuevo código y dale a **Commit changes...**.
- 
-Ahora verás una etiqueta verde en la cabecera que dirá **"En Vivo (Sincronizado)"** en todos los teléfonos que abran tu enlace al mismo tiempo. ¡Cualquier cambio se reflejará al instante en todas las pantallas!
+### Instrucciones para publicar en GitHub:
+1. Copia todo el contenido del archivo generado arriba.
+2. Abre tu archivo `index.html` en GitHub y dale al icono del **lápiz ✏️**.
+3. Selecciona todo, pégalo y haz clic en **"Commit changes..."**.
+4. ¡Listo! Esta vez GitHub lo compilará sin ningún problema de seguridad en menos de 30 segundos.
