@@ -235,10 +235,104 @@
         <span id="toast-message" class="text-sm font-semibold">Operación exitosa</span>
     </div>
 
-    <!-- Lógica JavaScript -->
+    <!-- MÓDULOS DE FIREBASE FIRESTORE PARA TIEMPO REAL -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Configuración de Firebase (se autoconfigura según las variables de entorno)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'morado-claro-event-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : {
+                // Si usas tu propio proyecto de Firebase en el futuro, puedes colocar tus credenciales aquí:
+                apiKey: "DEMO_KEY",
+                authDomain: "demo-app.firebaseapp.com",
+                projectId: "demo-app",
+                storageBucket: "demo-app.appspot.com",
+                messagingSenderId: "123456789",
+                appId: "1:123456789:web:123456"
+            };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let isOnline = false;
+
+        // Autenticación rápida e inicialización del listener en tiempo real
+        async function initRealtimeSync() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                const collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'guests');
+
+                // Escuchar cambios en tiempo real desde la nube
+                onSnapshot(collectionRef, (snapshot) => {
+                    if (!snapshot.empty) {
+                        const cloudGuests = [];
+                        snapshot.forEach((docSnap) => {
+                            cloudGuests.push(docSnap.data());
+                        });
+                        window.guests = cloudGuests;
+                        window.saveToStorage();
+                        window.renderApp();
+                    } else {
+                        // Si la nube está vacía la primera vez, cargar datos iniciales
+                        window.uploadInitialToCloud();
+                    }
+                    isOnline = true;
+                }, (error) => {
+                    console.log("Modo offline activado o sin conexión a la base de datos.");
+                });
+            } catch (e) {
+                console.log("Utilizando memoria local.");
+            }
+        }
+
+        // Funciones globales expuestas para interactuar con la nube
+        window.syncGuestToCloud = async function(guest) {
+            if (!auth.currentUser) return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'guests', guest.id);
+                await setDoc(docRef, guest, { merge: true });
+            } catch (e) {
+                console.error("Error guardando en la nube:", e);
+            }
+        };
+
+        window.deleteGuestFromCloud = async function(guestId) {
+            if (!auth.currentUser) return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'guests', guestId);
+                await deleteDoc(docRef);
+            } catch (e) {
+                console.error("Error borrando en la nube:", e);
+            }
+        };
+
+        window.uploadInitialToCloud = async function() {
+            if (!auth.currentUser) return;
+            for (const g of window.initialGuestsData) {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'guests', g.id);
+                await setDoc(docRef, g);
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initRealtimeSync();
+        });
+    </script>
+
+    <!-- Lógica JavaScript Principal -->
     <script>
         // LOGO OFICIAL EMBEBIDO EN BASE64 (MORADO CLARO EVENTS)
-        const DEFAULT_LOGO_BASE64 = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAAACXBIWXMAAAsTAAALEwEAmpwYAAAgAElEQVR4nO3df5zcZX3n8e9ndpNAgASyIRuCRCCyBAV0gwgq4g8E21qrqFZr/dFqrdZWW6222lq11WqrtX6/rbW1Vmu1VquttVptVdQqgqiA...`; // Logo cargado
+        const DEFAULT_LOGO_BASE64 = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAAACXBIWXMAAAsTAAALEwEAmpwYAAAgAElEQVR4nO3df5zcZX3n8e9ndpNAgASyIRuCRCCyBAV0gwgq4g8E21qrqFZr/dFqrdZWW6222lq11WqrtX6/rbW1Vmu1VquttVptVdQqgqiA...`;
 
         // LISTA DE INVITADOS
         const initialGuestsData = [
@@ -502,6 +596,7 @@
                     showToast(`Se anuló el ingreso de ${guest.nombre}`, 'warning');
                 }
                 saveToStorage();
+                if (window.syncGuestToCloud) window.syncGuestToCloud(guest);
                 renderApp();
             }
         }
@@ -559,12 +654,14 @@
             const mesa = document.getElementById('input-mesa').value.trim();
             const nota = document.getElementById('input-nota').value.trim();
 
+            let targetGuest = null;
             if (id) {
                 const guest = guests.find(g => g.id === id);
                 if (guest) {
                     guest.nombre = nombre;
                     guest.mesa = mesa;
                     guest.nota = nota;
+                    targetGuest = guest;
                     showToast('Datos actualizados', 'success');
                 }
             } else {
@@ -577,10 +674,12 @@
                     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 };
                 guests.unshift(newGuest);
+                targetGuest = newGuest;
                 showToast(`Registrado e ingresado en ${mesa}`, 'success');
             }
 
             saveToStorage();
+            if (targetGuest && window.syncGuestToCloud) window.syncGuestToCloud(targetGuest);
             closeModal();
             renderApp();
         }
@@ -590,6 +689,7 @@
             if (confirm(`¿Eliminar a ${guest.nombre}?`)) {
                 guests = guests.filter(g => g.id !== id);
                 saveToStorage();
+                if (window.deleteGuestFromCloud) window.deleteGuestFromCloud(id);
                 renderApp();
                 showToast('Invitado eliminado', 'info');
             }
