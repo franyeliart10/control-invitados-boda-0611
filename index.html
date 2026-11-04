@@ -81,6 +81,12 @@
                     </div>
                 </div>
 
+                <!-- Estado de Conexión Sync -->
+                <div id="sync-status-badge" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span id="sync-status-text">Conectando...</span>
+                </div>
+
                 <!-- Botón móvil agregar -->
                 <button onclick="openModal()" class="sm:hidden bg-lila-600 hover:bg-lila-700 text-white p-2.5 rounded-xl text-sm font-semibold shadow-md active:scale-95 transition">
                     <i class="fa-solid fa-user-plus text-base"></i>
@@ -103,10 +109,22 @@
                 </div>
             </div>
 
-            <button onclick="openModal()" class="hidden sm:flex items-center gap-2 bg-lila-600 hover:bg-lila-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition active:scale-95">
-                <i class="fa-solid fa-user-plus"></i>
-                <span>Nuevo Invitado</span>
-            </button>
+            <div class="flex items-center gap-2">
+                <button onclick="exportGuestData()" title="Exportar/Compartir estado" class="bg-lila-100 hover:bg-lila-200 text-lila-800 px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-share-nodes"></i>
+                    <span class="hidden sm:inline">Compartir</span>
+                </button>
+                <button onclick="document.getElementById('import-file-input').click()" title="Cargar datos de otro celular" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-file-import"></i>
+                    <span class="hidden sm:inline">Importar</span>
+                </button>
+                <input type="file" id="import-file-input" accept=".json" class="hidden" onchange="importGuestData(event)">
+
+                <button onclick="openModal()" class="hidden sm:flex items-center gap-2 bg-lila-600 hover:bg-lila-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition active:scale-95">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Nuevo</span>
+                </button>
+            </div>
         </div>
 
         <!-- Selector de Vistas (Lista vs Mesas) -->
@@ -235,44 +253,47 @@
         <span id="toast-message" class="text-sm font-semibold">Operación exitosa</span>
     </div>
 
-    <!-- MÓDULOS DE FIREBASE FIRESTORE PARA TIEMPO REAL -->
+    <!-- MÓDULOS DE FIREBASE FIRESTORE EN TIEMPO REAL CON SUS CREDENCIALES OFICIALES -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuración de Firebase (se autoconfigura según las variables de entorno)
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'morado-claro-event-app';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : {
-                // Si usas tu propio proyecto de Firebase en el futuro, puedes colocar tus credenciales aquí:
-                apiKey: "DEMO_KEY",
-                authDomain: "demo-app.firebaseapp.com",
-                projectId: "demo-app",
-                storageBucket: "demo-app.appspot.com",
-                messagingSenderId: "123456789",
-                appId: "1:123456789:web:123456"
-            };
+        // CREDENCIALES OFICIALES DE BODA1106
+        const firebaseConfig = {
+            apiKey: "AIzaSyBaJDk93tWyP7FBCODkEwxbTZnDl2XUOQI",
+            authDomain: "boda1106-c1cfe.firebaseapp.com",
+            projectId: "boda1106-c1cfe",
+            storageBucket: "boda1106-c1cfe.firebasestorage.app",
+            messagingSenderId: "315646484390",
+            appId: "1:315646484390:web:b3f45b3c7234c19f58f967",
+            measurementId: "G-Q8CWHLFM0P"
+        };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let isOnline = false;
+        function updateSyncStatus(connected, text) {
+            const badge = document.getElementById('sync-status-badge');
+            const textEl = document.getElementById('sync-status-text');
+            if (connected) {
+                badge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200";
+                badge.querySelector('span').className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+                textEl.textContent = text || "En Vivo (Sincronizado)";
+            } else {
+                badge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200";
+                badge.querySelector('span').className = "w-2 h-2 rounded-full bg-amber-500 animate-pulse";
+                textEl.textContent = text || "Modo Local";
+            }
+        }
 
-        // Autenticación rápida e inicialización del listener en tiempo real
         async function initRealtimeSync() {
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                await signInAnonymously(auth);
+                const collectionRef = collection(db, 'boda_guests');
 
-                const collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'guests');
-
-                // Escuchar cambios en tiempo real desde la nube
+                // Escuchar cambios en tiempo real
                 onSnapshot(collectionRef, (snapshot) => {
                     if (!snapshot.empty) {
                         const cloudGuests = [];
@@ -282,44 +303,43 @@
                         window.guests = cloudGuests;
                         window.saveToStorage();
                         window.renderApp();
+                        updateSyncStatus(true, "En Vivo (Sincronizado)");
                     } else {
-                        // Si la nube está vacía la primera vez, cargar datos iniciales
+                        // Cargar invitados iniciales la primera vez en la base de datos
                         window.uploadInitialToCloud();
+                        updateSyncStatus(true, "Base lista");
                     }
-                    isOnline = true;
                 }, (error) => {
-                    console.log("Modo offline activado o sin conexión a la base de datos.");
+                    console.log("Error Firestore:", error);
+                    updateSyncStatus(false, "Modo Local (Offline)");
                 });
             } catch (e) {
-                console.log("Utilizando memoria local.");
+                console.log("Error Auth:", e);
+                updateSyncStatus(false, "Modo Local");
             }
         }
 
-        // Funciones globales expuestas para interactuar con la nube
         window.syncGuestToCloud = async function(guest) {
-            if (!auth.currentUser) return;
             try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'guests', guest.id);
+                const docRef = doc(db, 'boda_guests', guest.id);
                 await setDoc(docRef, guest, { merge: true });
             } catch (e) {
-                console.error("Error guardando en la nube:", e);
+                console.error("Error al guardar en tiempo real:", e);
             }
         };
 
         window.deleteGuestFromCloud = async function(guestId) {
-            if (!auth.currentUser) return;
             try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'guests', guestId);
+                const docRef = doc(db, 'boda_guests', guestId);
                 await deleteDoc(docRef);
             } catch (e) {
-                console.error("Error borrando en la nube:", e);
+                console.error("Error al borrar en la nube:", e);
             }
         };
 
         window.uploadInitialToCloud = async function() {
-            if (!auth.currentUser) return;
             for (const g of window.initialGuestsData) {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'guests', g.id);
+                const docRef = doc(db, 'boda_guests', g.id);
                 await setDoc(docRef, g);
             }
         };
@@ -524,6 +544,40 @@
                 saveToStorage();
                 renderApp();
                 showToast('Lista restablecida correctamente', 'info');
+            }
+        }
+
+        function exportGuestData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(guests));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `invitados_morado_claro_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('Archivo de invitados exportado', 'success');
+        }
+
+        function importGuestData(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedGuests = JSON.parse(e.target.result);
+                        if (Array.isArray(importedGuests)) {
+                            guests = importedGuests;
+                            saveToStorage();
+                            renderApp();
+                            showToast('¡Lista e ingresos actualizados con éxito!', 'success');
+                        } else {
+                            showToast('El archivo no tiene el formato correcto', 'warning');
+                        }
+                    } catch (err) {
+                        showToast('Error al leer el archivo', 'warning');
+                    }
+                };
+                reader.readAsText(file);
             }
         }
 
@@ -737,7 +791,6 @@
 
             // RENDER VISTA 2: DESGLOSE POR MESAS
             if (activeMainView === 'tables') {
-                // Agrupar por mesa
                 const tablesMap = {};
                 guests.forEach(g => {
                     const m = g.mesa.toUpperCase().trim() || 'SIN MESA';
@@ -757,13 +810,12 @@
                     const tableGuests = tablesMap[tableName];
                     const arrivedInTable = tableGuests.filter(g => g.arrived);
                     const pendingInTable = tableGuests.filter(g => !g.arrived);
-                    const isExpanded = expandedTables[tableName] !== false; // Abierto por defecto
+                    const isExpanded = expandedTables[tableName] !== false;
 
                     const percent = Math.round((arrivedInTable.length / tableGuests.length) * 100);
 
                     return `
                         <div class="bg-white border border-lila-100 rounded-2xl shadow-xs overflow-hidden transition">
-                            <!-- Header de la Mesa -->
                             <div onclick="toggleTableAccordion('${tableName}')" class="p-4 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-lila-50/50 transition">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-xl bg-lila-100 text-lila-700 flex items-center justify-center font-extrabold text-sm">
@@ -784,7 +836,6 @@
                                 </div>
 
                                 <div class="flex items-center gap-3 self-end sm:self-auto">
-                                    <!-- Barrita de Progreso -->
                                     <div class="w-24 bg-gray-100 h-2 rounded-full overflow-hidden border border-gray-200">
                                         <div class="bg-emerald-500 h-full transition-all duration-500" style="width: ${percent}%"></div>
                                     </div>
@@ -793,7 +844,6 @@
                                 </div>
                             </div>
 
-                            <!-- Desglose de Personas -->
                             ${isExpanded ? `
                                 <div class="border-t border-lila-100 p-3 bg-lila-50/30 space-y-2">
                                     ${tableGuests.map(g => renderGuestCard(g, false)).join('')}
@@ -871,3 +921,11 @@
     </script>
 </body>
 </html>
+```
+
+### Paso final para actualizar en GitHub:
+1. Copia todo el código del archivo actualizado arriba.
+2. Ve a tu repositorio en GitHub, abre el archivo `index.html` y toca el **lápiz ✏️** (Editar).
+3. Reemplaza todo por este nuevo código y dale a **Commit changes...**.
+
+Ahora verás una etiqueta verde en la cabecera que dirá **"En Vivo (Sincronizado)"** en todos los teléfonos que abran tu enlace al mismo tiempo. ¡Cualquier cambio se reflejará al instante en todas las pantallas!
